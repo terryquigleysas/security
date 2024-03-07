@@ -71,12 +71,13 @@ public class InternalAuthBackendTests {
 
         when(internalUsersModel.getHash(validUsernameAuth.getUsername())).thenReturn(hash);
         when(internalUsersModel.exists(validUsernameAuth.getUsername())).thenReturn(true);
-        doReturn(true).when(internalAuthenticationBackend).passwordMatchesHash(Mockito.any(String.class), Mockito.any(char[].class));
+        doReturn(true).when(internalAuthenticationBackend).passwordMatchesHash(Mockito.any(String.class), Mockito.any(char[].class), false);
 
         // Act
-        internalAuthenticationBackend.authenticate(validUsernameAuth);
+        internalAuthenticationBackend.authenticate(validUsernameAuth,
+                false);
 
-        verify(internalAuthenticationBackend, times(1)).passwordMatchesHash(hash, array);
+        verify(internalAuthenticationBackend, times(1)).passwordMatchesHash(hash, array, false);
         verify(internalUsersModel, times(1)).getBackenRoles(validUsernameAuth.getUsername());
     }
 
@@ -97,10 +98,11 @@ public class InternalAuthBackendTests {
 
         OpenSearchSecurityException ex = Assert.assertThrows(
             OpenSearchSecurityException.class,
-            () -> internalAuthenticationBackend.authenticate(validUsernameAuth)
+            () -> internalAuthenticationBackend.authenticate(validUsernameAuth,
+                    false)
         );
         assert (ex.getMessage().contains("password does not match"));
-        verify(internalAuthenticationBackend, times(1)).passwordMatchesHash(hash, array);
+        verify(internalAuthenticationBackend, times(1)).passwordMatchesHash(hash, array, false);
     }
 
     @Test
@@ -116,14 +118,15 @@ public class InternalAuthBackendTests {
         char[] array = createArrayFromPasswordBytes(validPasswordBytes);
 
         when(internalUsersModel.exists("ertyuiykgjjfguyifdghc")).thenReturn(false);
-        when(internalAuthenticationBackend.passwordMatchesHash(hash, array)).thenReturn(true); // Say that the password is correct
+        when(internalAuthenticationBackend.passwordMatchesHash(hash, array, false)).thenReturn(true); // Say that the password is correct
 
         OpenSearchSecurityException ex = Assert.assertThrows(
             OpenSearchSecurityException.class,
-            () -> internalAuthenticationBackend.authenticate(invalidUsernameAuth)
+            () -> internalAuthenticationBackend.authenticate(invalidUsernameAuth,
+                    false)
         );
         assert (ex.getMessage().contains("not found"));
-        verify(internalAuthenticationBackend, times(1)).passwordMatchesHash(hash, array);
+        verify(internalAuthenticationBackend, times(1)).passwordMatchesHash(hash, array, false);
     }
 
     @Test
@@ -142,9 +145,10 @@ public class InternalAuthBackendTests {
 
         OpenSearchSecurityException ex = Assert.assertThrows(
             OpenSearchSecurityException.class,
-            () -> internalAuthenticationBackend.authenticate(invalidUsernameAuth)
+            () -> internalAuthenticationBackend.authenticate(invalidUsernameAuth,
+                    false)
         );
-        verify(internalAuthenticationBackend, times(1)).passwordMatchesHash(hash, array);
+        verify(internalAuthenticationBackend, times(1)).passwordMatchesHash(hash, array, false);
         assert (ex.getMessage().contains("not found"));
     }
 }

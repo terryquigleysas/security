@@ -64,7 +64,7 @@ public interface AuthenticationBackend {
      * @throws OpenSearchSecurityException in case an authentication failure
      * (when credentials are incorrect, the user does not exist or the backend is not reachable)
      */
-    User authenticate(AuthCredentials credentials) throws OpenSearchSecurityException;
+    User authenticate(AuthCredentials credentials, final boolean fipsEnabled) throws OpenSearchSecurityException;
 
     /**
      *

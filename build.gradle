@@ -575,8 +575,12 @@ dependencies {
     implementation "com.google.guava:guava:${guava_version}"
     implementation 'org.greenrobot:eventbus-java:3.3.1'
     implementation 'commons-cli:commons-cli:1.6.0'
-    implementation "org.bouncycastle:bcprov-jdk15to18:${versions.bouncycastle}"
+    implementation 'commons-cli:commons-cli:1.5.0'
+    implementation 'com.rfksystems:blake2b:2.0.0'
+    compileOnly "org.bouncycastle:bc-fips:1.0.2.4"
+    compileOnly "org.bouncycastle:bctls-fips:1.0.18"
     implementation 'org.ldaptive:ldaptive:1.2.3'
+    implementation 'com.password4j:password4j:1.7.3'
     implementation 'com.nimbusds:nimbus-jose-jwt:9.37.3'
 
     //JWT
@@ -646,9 +650,11 @@ dependencies {
     runtimeOnly 'org.apache.ws.xmlschema:xmlschema-core:2.3.1'
     runtimeOnly 'org.apache.santuario:xmlsec:2.3.4'
     runtimeOnly "com.github.luben:zstd-jni:${versions.zstd}"
+    runtimeOnly 'org.checkerframework:checker-qual:3.38.0'
+    compileOnly 'org.bouncycastle:bcpkix-fips:1.0.7'
     runtimeOnly 'org.checkerframework:checker-qual:3.42.0'
-    runtimeOnly "org.bouncycastle:bcpkix-jdk15to18:${versions.bouncycastle}"
     runtimeOnly 'org.scala-lang.modules:scala-java8-compat_3:1.0.2'
+    implementation 'com.password4j:password4j:1.7.3'
 
 
     testImplementation "org.opensaml:opensaml-messaging-impl:${open_saml_version}"
@@ -715,8 +721,7 @@ dependencies {
     integrationTestImplementation "org.apache.logging.log4j:log4j-core:${versions.log4j}"
     integrationTestImplementation "org.apache.logging.log4j:log4j-jul:${versions.log4j}"
     integrationTestImplementation 'org.hamcrest:hamcrest:2.2'
-    integrationTestImplementation "org.bouncycastle:bcpkix-jdk15to18:${versions.bouncycastle}"
-    integrationTestImplementation "org.bouncycastle:bcutil-jdk15to18:${versions.bouncycastle}"
+    integrationTestImplementation 'org.bouncycastle:bcpkix-fips:1.0.7'
     integrationTestImplementation('org.awaitility:awaitility:4.2.0') {
         exclude(group: 'org.hamcrest', module: 'hamcrest')
     }

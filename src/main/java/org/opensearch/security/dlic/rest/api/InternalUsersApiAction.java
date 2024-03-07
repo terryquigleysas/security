@@ -34,6 +34,7 @@ import org.opensearch.security.dlic.rest.validation.ValidationResult;
 import org.opensearch.security.securityconf.Hashed;
 import org.opensearch.security.securityconf.impl.CType;
 import org.opensearch.security.securityconf.impl.SecurityDynamicConfiguration;
+import org.opensearch.security.support.ConfigConstants;
 import org.opensearch.security.support.SecurityJsonNode;
 import org.opensearch.security.user.UserFilterType;
 import org.opensearch.security.user.UserService;
@@ -265,10 +266,11 @@ public class InternalUsersApiAction extends AbstractApiAction {
 
             private ValidationResult<SecurityConfiguration> generateHashForPassword(final SecurityConfiguration securityConfiguration) {
                 final var content = (ObjectNode) securityConfiguration.requestContent();
+                final boolean fipsEnabled = clusterService.getSettings().getAsBoolean(ConfigConstants.SECURITY_FIPS_MODE_ENABLED_KEY, false);
                 if (content.has("password")) {
                     final var plainTextPassword = content.get("password").asText();
                     content.remove("password");
-                    content.put("hash", hash(plainTextPassword.toCharArray()));
+                    content.put("hash", hash(plainTextPassword.toCharArray(), fipsEnabled));
                 }
                 return ValidationResult.success(securityConfiguration);
             }

@@ -14,14 +14,13 @@ package org.opensearch.security.dlic.rest.support;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
@@ -30,8 +29,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.password4j.AbstractHashingFunction;
+import com.password4j.BcryptFunction;
+import com.password4j.CompressedPBKDF2Function;
+import com.password4j.Hash;
+import com.password4j.Password;
+import com.password4j.types.Bcrypt;
+import com.password4j.types.Hmac;
 import org.apache.commons.lang3.tuple.Pair;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 import org.opensearch.ExceptionsHelper;
 import org.opensearch.OpenSearchParseException;
@@ -191,13 +198,52 @@ public class Utils {
      *                          This will be cleared from memory.
      * @return hash of the password
      */
-    public static String hash(final char[] clearTextPassword) {
-        final byte[] salt = new byte[16];
-        new SecureRandom().nextBytes(salt);
-        final String hash = OpenBSDBCrypt.generate((Objects.requireNonNull(clearTextPassword)), salt, 12);
-        Arrays.fill(salt, (byte) 0);
-        Arrays.fill(clearTextPassword, '\0');
-        return hash;
+    public static String hash(final char[] clearTextPassword, final boolean fipsEnabled) {
+        return AccessController.doPrivileged(new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                /*
+                if (fipsEnabled) {
+
+                }
+                else {
+                    Hash hash = Password.hash(new String(clearTextPassword))
+                            .with(BcryptFunction.getInstance(Bcrypt.B, 12));
+                    return hash.getResult();
+                }
+                */
+                Hash hash = Password.hash(new String(clearTextPassword))
+                        .with(getHashingFunction(fipsEnabled));
+                return hash.getResult();
+            }
+        });
+    }
+
+    public static boolean checkPassword(String hash, char[] array, boolean fipsEnabled) {
+        return AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+            @Override
+            public Boolean run() {
+                /*
+                if (fipsEnabled) {
+                    return Password.check(new String(array), hash).with(CompressedPBKDF2Function.getInstance(Hmac.SHA256, 600000, 256));
+                }
+                else {
+                    return Password.check(new String(array), hash).with(BcryptFunction.getInstance(Bcrypt.B, 12));
+                }
+                 */
+                return Password.check(new String(array), hash).with(getHashingFunction(fipsEnabled));
+            }
+        });
+    }
+
+    public static AbstractHashingFunction getHashingFunction(boolean fipsEnabled) {
+        //TODO FIPS Make hashing configurable? Validate? See also https://github.com/opensearch-project/security/issues/4079
+        if (fipsEnabled) {
+            return CompressedPBKDF2Function.getInstance(Hmac.SHA256, 600000, 256);
+        }
+        else {
+            return BcryptFunction.getInstance(Bcrypt.B, 12);
+        }
     }
 
     /**

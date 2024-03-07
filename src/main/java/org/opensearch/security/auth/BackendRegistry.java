@@ -98,6 +98,8 @@ public class BackendRegistry {
     private Cache<String, User> restImpersonationCache; // used for rest impersonation
     private Cache<User, Set<String>> restRoleCache; //
 
+    private final boolean fipsEnabled;
+
     private void createCaches() {
         userCache = CacheBuilder.newBuilder()
             .expireAfterWrite(ttlInMin, TimeUnit.MINUTES)
@@ -152,6 +154,8 @@ public class BackendRegistry {
         // This is going to be defined in the opensearch.yml, so it's best suited to be initialized once.
         this.injectedUserEnabled = opensearchSettings.getAsBoolean(ConfigConstants.SECURITY_UNSUPPORTED_INJECT_USER_ENABLED, false);
         initialized = this.injectedUserEnabled;
+
+        this.fipsEnabled = opensearchSettings.getAsBoolean(ConfigConstants.SECURITY_FIPS_MODE_ENABLED_KEY, false);
 
         createCaches();
     }
@@ -556,7 +560,7 @@ public class BackendRegistry {
             // that mean authc and authz was completely done via HTTP (like JWT or PKI)
             if (authBackend.getClass() == NoOpAuthenticationBackend.class && authorizers.isEmpty()) {
                 // no cache
-                return authBackend.authenticate(ac);
+                return authBackend.authenticate(ac, fipsEnabled);
             }
 
             return cache.get(ac, new Callable<User>() {
@@ -569,7 +573,7 @@ public class BackendRegistry {
                             authBackend.getType()
                         );
                     }
-                    final User authenticatedUser = authBackend.authenticate(ac);
+                    final User authenticatedUser = authBackend.authenticate(ac, fipsEnabled);
                     authz(authenticatedUser, roleCache, authorizers);
                     return authenticatedUser;
                 }

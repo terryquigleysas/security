@@ -65,6 +65,9 @@ import org.apache.lucene.util.automaton.CompiledAutomaton;
 
 import org.opensearch.ExceptionsHelper;
 import org.opensearch.cluster.service.ClusterService;
+import org.opensearch.common.settings.Settings;
+import org.opensearch.core.common.bytes.BytesArray;
+import org.opensearch.core.common.bytes.BytesReference;
 import org.opensearch.common.collect.Tuple;
 import org.opensearch.common.lucene.index.SequentialStoredFieldsLeafReader;
 import org.opensearch.common.util.concurrent.ThreadContext;
@@ -85,6 +88,8 @@ import org.opensearch.security.support.HeaderHelper;
 import org.opensearch.security.support.MapUtils;
 import org.opensearch.security.support.SecurityUtils;
 import org.opensearch.security.support.WildcardMatcher;
+
+import static org.opensearch.security.support.ConfigConstants.OPENDISTRO_SECURITY_USER_INFO_THREAD_CONTEXT;
 
 class DlsFlsFilterLeafReader extends SequentialStoredFieldsLeafReader {
 
@@ -109,6 +114,8 @@ class DlsFlsFilterLeafReader extends SequentialStoredFieldsLeafReader {
 
     private DlsGetEvaluator dge = null;
 
+    private final boolean fipsEnabled;
+
     DlsFlsFilterLeafReader(
         final LeafReader delegate,
         final Set<String> includesExcludes,
@@ -132,6 +139,7 @@ class DlsFlsFilterLeafReader extends SequentialStoredFieldsLeafReader {
         this.salt = salt;
         this.maskedFieldsMap = MaskedFieldsMap.extractMaskedFields(maskFields, maskedFields, salt);
 
+        this.fipsEnabled = clusterService.getSettings().getAsBoolean(ConfigConstants.SECURITY_FIPS_MODE_ENABLED_KEY, false);
         this.shardId = shardId;
         flsEnabled = includesExcludes != null && !includesExcludes.isEmpty();
 
@@ -788,9 +796,9 @@ class DlsFlsFilterLeafReader extends SequentialStoredFieldsLeafReader {
                         final Object listFieldItem = iterator.next();
 
                         if (listFieldItem instanceof String) {
-                            iterator.set(mf.mask(((String) listFieldItem)));
+                            iterator.set(mf.mask(((String) listFieldItem),fipsEnabled));
                         } else if (listFieldItem instanceof byte[]) {
-                            iterator.set(mf.mask(((byte[]) listFieldItem)));
+                            iterator.set(mf.mask(((byte[]) listFieldItem), fipsEnabled));
                         }
                     }
                 }
@@ -802,9 +810,9 @@ class DlsFlsFilterLeafReader extends SequentialStoredFieldsLeafReader {
                 final MaskedField mf = maskedFieldsMap.getMaskedField(field).orElse(null);
                 if (mf != null) {
                     if (v instanceof String) {
-                        map.replace(key, mf.mask(((String) v)));
+                        map.replace(key, mf.mask(((String) v), fipsEnabled));
                     } else {
-                        map.replace(key, mf.mask(((byte[]) v)));
+                        map.replace(key, mf.mask(((byte[]) v), fipsEnabled));
                     }
                 }
             }
@@ -893,7 +901,7 @@ class DlsFlsFilterLeafReader extends SequentialStoredFieldsLeafReader {
 
                     @Override
                     public BytesRef binaryValue() throws IOException {
-                        return mf.mask(binaryDocValues.binaryValue());
+                        return mf.mask(binaryDocValues.binaryValue(), fipsEnabled);
                     }
                 };
             }
@@ -963,7 +971,7 @@ class DlsFlsFilterLeafReader extends SequentialStoredFieldsLeafReader {
 
                     @Override
                     public BytesRef lookupOrd(int ord) throws IOException {
-                        return mf.mask(sortedDocValues.lookupOrd(ord));
+                        return mf.mask(sortedDocValues.lookupOrd(ord), fipsEnabled);
                     }
 
                     @Override
@@ -1048,7 +1056,7 @@ class DlsFlsFilterLeafReader extends SequentialStoredFieldsLeafReader {
 
                     @Override
                     public BytesRef lookupOrd(long ord) throws IOException {
-                        return mf.mask(sortedSetDocValues.lookupOrd(ord));
+                        return mf.mask(sortedSetDocValues.lookupOrd(ord), fipsEnabled);
                     }
 
                     @Override
@@ -1268,7 +1276,7 @@ class DlsFlsFilterLeafReader extends SequentialStoredFieldsLeafReader {
 
         @Override
         public BytesRef term() throws IOException {
-            return mf.mask(delegate.term());
+            return mf.mask(delegate.term(), mf.isFipsEnabled());
         }
 
         @Override

@@ -31,7 +31,6 @@ package org.opensearch.test.framework;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,7 +38,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -644,12 +642,7 @@ public class TestSecurityConfig {
     }
 
     static String hash(final char[] clearTextPassword) {
-        final byte[] salt = new byte[16];
-        new SecureRandom().nextBytes(salt);
-        final String hash = OpenBSDBCrypt.generate((Objects.requireNonNull(clearTextPassword)), salt, 12);
-        Arrays.fill(salt, (byte) 0);
-        Arrays.fill(clearTextPassword, '\0');
-        return hash;
+        return Utils.hash(clearTextPassword, false);
     }
 
     private void writeEmptyConfigToIndex(Client client, CType configType) {

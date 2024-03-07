@@ -1179,9 +1179,9 @@ public class DefaultSecurityKeyStore implements SecurityKeyStore {
             final ASN1Sequence sequence = ASN1Sequence.getInstance(asn1Primitive);
             final ASN1ObjectIdentifier asn1ObjectIdentifier = ASN1ObjectIdentifier.getInstance(sequence.getObjectAt(0));
             final ASN1TaggedObject asn1TaggedObject = ASN1TaggedObject.getInstance(sequence.getObjectAt(1));
-            ASN1Object maybeTaggedAsn1Primitive = asn1TaggedObject.getBaseObject();
+            ASN1Object maybeTaggedAsn1Primitive = asn1TaggedObject.getObject();
             if (maybeTaggedAsn1Primitive instanceof ASN1TaggedObject) {
-                maybeTaggedAsn1Primitive = ASN1TaggedObject.getInstance(maybeTaggedAsn1Primitive).getBaseObject();
+                maybeTaggedAsn1Primitive = ASN1TaggedObject.getInstance(maybeTaggedAsn1Primitive).getObject();
             }
             if (maybeTaggedAsn1Primitive instanceof ASN1String) {
                 return ImmutableList.of(asn1ObjectIdentifier.getId(), maybeTaggedAsn1Primitive.toString());

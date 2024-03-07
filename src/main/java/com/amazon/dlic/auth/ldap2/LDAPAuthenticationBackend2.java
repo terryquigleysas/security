@@ -88,7 +88,7 @@ public class LDAPAuthenticationBackend2 implements AuthenticationBackend, Destro
 
     @Override
     @SuppressWarnings("removal")
-    public User authenticate(final AuthCredentials credentials) throws OpenSearchSecurityException {
+    public User authenticate(final AuthCredentials credentials, final boolean fipsEnabled) throws OpenSearchSecurityException {
         final SecurityManager sm = System.getSecurityManager();
 
         if (sm != null) {

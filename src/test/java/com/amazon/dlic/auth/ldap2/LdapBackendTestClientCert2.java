@@ -58,7 +58,8 @@ public class LdapBackendTestClientCert2 {
         LdapUser user;
         try {
             user = (LdapUser) new LDAPAuthenticationBackend2(settings, null).authenticate(
-                new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8))
+                new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8)),
+                    false
             );
             Assert.fail();
         } catch (Exception e) {
@@ -92,7 +93,8 @@ public class LdapBackendTestClientCert2 {
         LdapUser user;
         try {
             user = (LdapUser) new LDAPAuthenticationBackend2(settings, null).authenticate(
-                new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8))
+                new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8)),
+                    false
             );
             Assert.fail();
         } catch (Exception e) {
@@ -126,7 +128,8 @@ public class LdapBackendTestClientCert2 {
         LdapUser user;
         try {
             user = (LdapUser) new LDAPAuthenticationBackend2(settings, null).authenticate(
-                new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8))
+                new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8)),
+                    false
             );
             Assert.fail();
         } catch (Exception e) {
@@ -158,7 +161,8 @@ public class LdapBackendTestClientCert2 {
             .build();
 
         final LdapUser user = (LdapUser) new LDAPAuthenticationBackend2(settings, null).authenticate(
-            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8))
+            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8)),
+                false
         );
         Assert.assertNotNull(user);
         Assert.assertEquals("ldap_hr_employee", user.getName());
@@ -187,7 +191,8 @@ public class LdapBackendTestClientCert2 {
             .build();
 
         final LdapUser user = (LdapUser) new LDAPAuthenticationBackend2(settings, null).authenticate(
-            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8))
+            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8)),
+                false
         );
         Assert.assertNotNull(user);
         Assert.assertEquals("ldap_hr_employee", user.getName());
@@ -219,7 +224,8 @@ public class LdapBackendTestClientCert2 {
             .build();
 
         final LdapUser user = (LdapUser) new LDAPAuthenticationBackend2(settings, null).authenticate(
-            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8))
+            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8)),
+                false
         );
         Assert.assertNotNull(user);
         Assert.assertEquals("ldap_hr_employee", user.getName());
@@ -248,7 +254,8 @@ public class LdapBackendTestClientCert2 {
             .build();
 
         final LdapUser user = (LdapUser) new LDAPAuthenticationBackend2(settings, null).authenticate(
-            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8))
+            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8)),
+                false
         );
         Assert.assertNotNull(user);
         Assert.assertEquals("ldap_hr_employee", user.getName());
@@ -283,7 +290,8 @@ public class LdapBackendTestClientCert2 {
             .build();
 
         final LdapUser user = (LdapUser) new LDAPAuthenticationBackend2(settings, null).authenticate(
-            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8))
+            new AuthCredentials("ldap_hr_employee", "ldap_hr_employee".getBytes(StandardCharsets.UTF_8)),
+                false
         );
         Assert.assertNotNull(user);
         Assert.assertEquals("ldap_hr_employee", user.getName());

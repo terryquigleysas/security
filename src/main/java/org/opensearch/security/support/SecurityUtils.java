@@ -38,6 +38,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.opensearch.common.settings.Settings;
+import org.opensearch.security.dlic.rest.support.Utils;
 import org.opensearch.security.tools.Hasher;
 
 public final class SecurityUtils {
@@ -96,16 +97,19 @@ public final class SecurityUtils {
             return in;
         }
 
-        return replaceEnvVarsBC(replaceEnvVarsNonBC(replaceEnvVarsBase64(in)));
+        // TODO FIPS add null check? is this a bug if settings is null?
+        final boolean fipsEnabled = settings.getAsBoolean(ConfigConstants.SECURITY_FIPS_MODE_ENABLED_KEY, false);
+        // TODO FIPS Refactor?
+        return replaceEnvVarsBC(replaceEnvVarsNonBC(replaceEnvVarsBase64(in, fipsEnabled), fipsEnabled), fipsEnabled);
     }
 
-    private static String replaceEnvVarsNonBC(String in) {
+    private static String replaceEnvVarsNonBC(String in, final boolean fipsEnabled) {
         // ${env.MY_ENV_VAR}
         // ${env.MY_ENV_VAR:-default}
         Matcher matcher = ENV_PATTERN.matcher(in);
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
-            final String replacement = resolveEnvVar(matcher.group(1), matcher.group(2), false);
+            final String replacement = resolveEnvVar(matcher.group(1), matcher.group(2), false, fipsEnabled);
             if (replacement != null) {
                 matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
             }
@@ -114,13 +118,13 @@ public final class SecurityUtils {
         return sb.toString();
     }
 
-    private static String replaceEnvVarsBC(String in) {
+    private static String replaceEnvVarsBC(String in, final boolean fipsEnabled) {
         // ${envbc.MY_ENV_VAR}
         // ${envbc.MY_ENV_VAR:-default}
         Matcher matcher = ENVBC_PATTERN.matcher(in);
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
-            final String replacement = resolveEnvVar(matcher.group(1), matcher.group(2), true);
+            final String replacement = resolveEnvVar(matcher.group(1), matcher.group(2), true, fipsEnabled);
             if (replacement != null) {
                 matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
             }
@@ -129,13 +133,13 @@ public final class SecurityUtils {
         return sb.toString();
     }
 
-    private static String replaceEnvVarsBase64(String in) {
+    private static String replaceEnvVarsBase64(String in, final boolean fipsEnabled) {
         // ${envbc.MY_ENV_VAR}
         // ${envbc.MY_ENV_VAR:-default}
         Matcher matcher = ENVBASE64_PATTERN.matcher(in);
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
-            final String replacement = resolveEnvVar(matcher.group(1), matcher.group(2), false);
+            final String replacement = resolveEnvVar(matcher.group(1), matcher.group(2), false, fipsEnabled);
             if (replacement != null) {
                 matcher.appendReplacement(
                     sb,
@@ -149,16 +153,16 @@ public final class SecurityUtils {
 
     // ${env.MY_ENV_VAR}
     // ${env.MY_ENV_VAR:-default}
-    private static String resolveEnvVar(String envVarName, String mode, boolean bc) {
+    private static String resolveEnvVar(String envVarName, String mode, boolean bc, final boolean fipsEnabled) {
         final String envVarValue = System.getenv(envVarName);
         if (envVarValue == null || envVarValue.isEmpty()) {
             if (mode != null && mode.startsWith(":-") && mode.length() > 2) {
-                return bc ? Hasher.hash(mode.substring(2).toCharArray()) : mode.substring(2);
+                return bc ? Utils.hash(mode.substring(2).toCharArray(), fipsEnabled) : mode.substring(2);
             } else {
                 return null;
             }
         } else {
-            return bc ? Hasher.hash(envVarValue.toCharArray()) : envVarValue;
+            return bc ? Utils.hash(envVarValue.toCharArray(), fipsEnabled) : envVarValue;
         }
     }
 }

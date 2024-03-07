@@ -11,14 +11,17 @@
 
 package org.opensearch.security.dlic.rest.api;
 
+import com.password4j.BcryptFunction;
+import com.password4j.Password;
+import com.password4j.types.Bcrypt;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
-
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.opensearch.core.rest.RestStatus;
 import org.opensearch.rest.RestRequest;
 import org.opensearch.security.DefaultObjectMapper;
@@ -93,7 +96,7 @@ public class InternalUsersApiActionValidationTest extends AbstractApiActionValid
         assertEquals(RestStatus.OK, result.status());
         assertFalse(securityConfiguration.requestContent().has("password"));
         assertTrue(securityConfiguration.requestContent().has("hash"));
-        assertTrue(OpenBSDBCrypt.checkPassword(securityConfiguration.requestContent().get("hash").asText(), "aaaaaa".toCharArray()));
+        assertTrue(Password.check("aaaaaa", securityConfiguration.requestContent().get("hash").asText()).with(BcryptFunction.getInstance(Bcrypt.B,12)));
     }
 
     @Test

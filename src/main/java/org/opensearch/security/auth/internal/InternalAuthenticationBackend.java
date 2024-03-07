@@ -26,6 +26,15 @@
 
 package org.opensearch.security.auth.internal;
 
+import org.greenrobot.eventbus.Subscribe;
+import org.opensearch.OpenSearchSecurityException;
+import org.opensearch.security.auth.AuthenticationBackend;
+import org.opensearch.security.auth.AuthorizationBackend;
+import org.opensearch.security.dlic.rest.support.Utils;
+import org.opensearch.security.securityconf.InternalUsersModel;
+import org.opensearch.security.user.AuthCredentials;
+import org.opensearch.security.user.User;
+
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
@@ -34,8 +43,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 import org.opensearch.OpenSearchSecurityException;
 import org.opensearch.security.auth.AuthenticationBackend;
@@ -90,13 +97,12 @@ public class InternalAuthenticationBackend implements AuthenticationBackend, Aut
      * @param array A char array of the provided password
      * @return Whether the hash matches the provided password
      */
-    public boolean passwordMatchesHash(String hash, char[] array) {
-        return OpenBSDBCrypt.checkPassword(hash, array);
+    public boolean passwordMatchesHash(String hash, char[] array, boolean fipsEnabled) {
+        return Utils.checkPassword(hash, array, fipsEnabled);
     }
 
     @Override
-    public User authenticate(final AuthCredentials credentials) {
-
+    public User authenticate(final AuthCredentials credentials, final boolean fipsEnabled) {
         boolean userExists;
 
         if (internalUsersModel == null) {
@@ -128,7 +134,7 @@ public class InternalAuthenticationBackend implements AuthenticationBackend, Aut
         Arrays.fill(password, (byte) 0);
 
         try {
-            if (passwordMatchesHash(hash, array) && userExists) {
+            if (passwordMatchesHash(hash, array, fipsEnabled) && userExists) {
                 final List<String> roles = internalUsersModel.getBackenRoles(credentials.getUsername());
                 final Map<String, String> customAttributes = internalUsersModel.getAttributes(credentials.getUsername());
                 if (customAttributes != null) {
