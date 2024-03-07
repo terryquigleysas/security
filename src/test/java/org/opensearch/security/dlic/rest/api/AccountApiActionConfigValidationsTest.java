@@ -10,12 +10,15 @@
 package org.opensearch.security.dlic.rest.api;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
+import com.password4j.BcryptFunction;
+import com.password4j.Password;
+import com.password4j.types.Bcrypt;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opensearch.core.rest.RestStatus;
 import org.opensearch.security.dlic.rest.support.Utils;
 import org.opensearch.security.securityconf.impl.v7.InternalUserV7;
+import org.opensearch.security.support.ConfigConstants;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -29,11 +32,13 @@ public class AccountApiActionConfigValidationsTest extends AbstractApiActionVali
 
         final var u = createExistingUser();
 
+        boolean fipsEnabled = clusterService.getSettings().getAsBoolean(ConfigConstants.SECURITY_FIPS_MODE_ENABLED_KEY, false);
+
         var result = accountApiAction.validCurrentPassword(SecurityConfiguration.of(requestContent(), "u", configuration));
         assertFalse(result.isValid());
         assertEquals(RestStatus.BAD_REQUEST, result.status());
 
-        u.setHash(Utils.hash("aaaa".toCharArray()));
+        u.setHash(Utils.hash("aaaa".toCharArray(), fipsEnabled));
         result = accountApiAction.validCurrentPassword(SecurityConfiguration.of(requestContent(), "u", configuration));
         assertTrue(result.isValid());
     }
@@ -47,6 +52,8 @@ public class AccountApiActionConfigValidationsTest extends AbstractApiActionVali
         final var u = createExistingUser();
         u.setHash(null);
 
+        final boolean fipsEnabled = clusterService.getSettings().getAsBoolean(ConfigConstants.SECURITY_FIPS_MODE_ENABLED_KEY, false);
+
         var result = accountApiAction.updatePassword(SecurityConfiguration.of(requestContent, "u", configuration));
         assertFalse(result.isValid());
         assertEquals(RestStatus.BAD_REQUEST, result.status());
@@ -54,13 +61,12 @@ public class AccountApiActionConfigValidationsTest extends AbstractApiActionVali
         requestContent.put("password", "cccccc");
         result = accountApiAction.updatePassword(SecurityConfiguration.of(requestContent, "u", configuration));
         assertTrue(result.isValid());
-        assertTrue(OpenBSDBCrypt.checkPassword(u.getHash(), "cccccc".toCharArray()));
-
+        assertTrue(Password.check("cccccc", u.getHash()).with(BcryptFunction.getInstance(Bcrypt.B,12)));
         requestContent.remove("password");
-        requestContent.put("hash", Utils.hash("dddddd".toCharArray()));
+        requestContent.put("hash", Utils.hash("dddddd".toCharArray(),fipsEnabled));
         result = accountApiAction.updatePassword(SecurityConfiguration.of(requestContent, "u", configuration));
         assertTrue(result.isValid());
-        assertTrue(OpenBSDBCrypt.checkPassword(u.getHash(), "dddddd".toCharArray()));
+        assertTrue(Password.check("dddddd", u.getHash()).with(BcryptFunction.getInstance(Bcrypt.B,12)));
     }
 
     private ObjectNode requestContent() {
@@ -69,7 +75,7 @@ public class AccountApiActionConfigValidationsTest extends AbstractApiActionVali
 
     private InternalUserV7 createExistingUser() {
         final var u = new InternalUserV7();
-        u.setHash(Utils.hash("sssss".toCharArray()));
+        u.setHash(Utils.hash("sssss".toCharArray(), false));
         Mockito.<Object>when(configuration.getCEntry("u")).thenReturn(u);
         return u;
     }

@@ -85,6 +85,8 @@ public class UserService {
         ":" // Not allowed in basic auth, see https://stackoverflow.com/a/33391003/533057
     );
 
+    private final boolean fipsEnabled;
+
     @Inject
     public UserService(ClusterService clusterService, ConfigurationRepository configurationRepository, Settings settings, Client client) {
         this.clusterService = clusterService;
@@ -94,6 +96,7 @@ public class UserService {
             ConfigConstants.OPENDISTRO_SECURITY_DEFAULT_CONFIG_INDEX
         );
         this.client = client;
+        this.fipsEnabled = clusterService.getSettings().getAsBoolean(ConfigConstants.SECURITY_FIPS_MODE_ENABLED_KEY, false);
     }
 
     /**
@@ -135,7 +138,7 @@ public class UserService {
                                                                                                                           // service account
             verifyServiceAccount(securityJsonNode, accountName);
             String password = generatePassword();
-            contentAsNode.put("hash", hash(password.toCharArray()));
+            contentAsNode.put("hash", hash(password.toCharArray(), this.fipsEnabled));
             contentAsNode.put("service", "true");
         } else {
             contentAsNode.put("service", "false");
@@ -155,7 +158,7 @@ public class UserService {
         final String origHash = securityJsonNode.get("hash").asString();
         if (plainTextPassword != null && plainTextPassword.length() > 0) {
             contentAsNode.remove("password");
-            contentAsNode.put("hash", hash(plainTextPassword.toCharArray()));
+            contentAsNode.put("hash", hash(plainTextPassword.toCharArray(), fipsEnabled));
         } else if (origHash != null && origHash.length() > 0) {
             contentAsNode.remove("password");
         } else if (plainTextPassword != null && plainTextPassword.isEmpty() && origHash == null) {
@@ -268,7 +271,7 @@ public class UserService {
 
             // Generate a new password for the account and store the hash of it
             String plainTextPassword = generatePassword();
-            contentAsNode.put("hash", hash(plainTextPassword.toCharArray()));
+            contentAsNode.put("hash", hash(plainTextPassword.toCharArray(), fipsEnabled));
             contentAsNode.put("enabled", "true");
             contentAsNode.put("service", "true");
 

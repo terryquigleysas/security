@@ -32,7 +32,7 @@ public class DummyAuthenticationBackend implements AuthenticationBackend {
     }
 
     @Override
-    public User authenticate(AuthCredentials credentials) throws OpenSearchSecurityException {
+    public User authenticate(AuthCredentials credentials, boolean fipsEnabled) throws OpenSearchSecurityException {
         authCount++;
         return new User(credentials.getUsername());
     }

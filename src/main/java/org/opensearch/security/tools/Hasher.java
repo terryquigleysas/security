@@ -26,18 +26,15 @@
 
 package org.opensearch.security.tools;
 
-import java.io.Console;
-import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.Objects;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
+import org.opensearch.security.dlic.rest.support.Utils;
+
+import java.io.Console;
 
 public class Hasher {
 
@@ -45,6 +42,7 @@ public class Hasher {
 
         final Options options = new Options();
         final HelpFormatter formatter = new HelpFormatter();
+        boolean fipsEnabled = false;
         options.addOption(Option.builder("p").argName("password").hasArg().desc("Cleartext password to hash").build());
         options.addOption(
             Option.builder("env")
@@ -54,39 +52,36 @@ public class Hasher {
                 .build()
         );
 
+        options.addOption(Option.builder("fm").longOpt("fipsmode").desc("FIPS mode enabled").build());
+
         final CommandLineParser parser = new DefaultParser();
         try {
             final CommandLine line = parser.parse(options, args);
 
+            if (line.hasOption("fm")) {
+                fipsEnabled = true;
+            }
+
             if (line.hasOption("p")) {
-                System.out.println(hash(line.getOptionValue("p").toCharArray()));
+                System.out.println(Utils.hash(line.getOptionValue("p").toCharArray(),fipsEnabled));
             } else if (line.hasOption("env")) {
                 final String pwd = System.getenv(line.getOptionValue("env"));
                 if (pwd == null || pwd.isEmpty()) {
                     throw new Exception("No environment variable '" + line.getOptionValue("env") + "' set");
                 }
-                System.out.println(hash(pwd.toCharArray()));
+                System.out.println(Utils.hash(pwd.toCharArray(),fipsEnabled));
             } else {
                 final Console console = System.console();
                 if (console == null) {
                     throw new Exception("Cannot allocate a console");
                 }
                 final char[] passwd = console.readPassword("[%s]", "Password:");
-                System.out.println(hash(passwd));
+                System.out.println(Utils.hash(passwd,fipsEnabled));
             }
         } catch (final Exception exp) {
             System.err.println("Parsing failed.  Reason: " + exp.getMessage());
             formatter.printHelp("hash.sh", options, true);
             System.exit(-1);
         }
-    }
-
-    public static String hash(final char[] clearTextPassword) {
-        final byte[] salt = new byte[16];
-        new SecureRandom().nextBytes(salt);
-        final String hash = OpenBSDBCrypt.generate((Objects.requireNonNull(clearTextPassword)), salt, 12);
-        Arrays.fill(salt, (byte) 0);
-        Arrays.fill(clearTextPassword, '\0');
-        return hash;
     }
 }

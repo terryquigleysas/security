@@ -81,7 +81,7 @@ public class LDAPAuthenticationBackend implements AuthenticationBackend {
     }
 
     @Override
-    public User authenticate(final AuthCredentials credentials) throws OpenSearchSecurityException {
+    public User authenticate(final AuthCredentials credentials, final boolean fipsEnabled) throws OpenSearchSecurityException {
 
         Connection ldapConnection = null;
         final String user = credentials.getUsername();

@@ -11,6 +11,13 @@
 
 package org.opensearch.security.configuration;
 
+import com.google.common.base.Splitter;
+import com.rfksystems.blake2b.Blake2b;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.lucene.util.BytesRef;
+import org.bouncycastle.util.encoders.Hex;
+import org.opensearch.security.OpenSearchSecurityPlugin;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,17 +26,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import com.google.common.base.Splitter;
-import org.apache.lucene.util.BytesRef;
-import org.bouncycastle.crypto.digests.Blake2bDigest;
-import org.bouncycastle.util.encoders.Hex;
-
 public class MaskedField {
 
     private final String name;
     private String algo = null;
     private List<RegexReplacement> regexReplacements;
     private final byte[] defaultSalt;
+
+    private boolean fipsEnabled = true;
 
     public MaskedField(final String value, final Salt salt) {
         this.defaultSalt = salt.getSalt16();
@@ -52,32 +56,54 @@ public class MaskedField {
     }
 
     public final void isValid() throws Exception {
-        mask(new byte[] { 1, 2, 3, 4, 5 });
+        mask(new byte[] { 1, 2, 3, 4, 5}, false);
     }
 
-    public byte[] mask(byte[] value) {
+    public final boolean isFipsEnabled(){
+        return this.fipsEnabled;
+    }
+
+    public byte[] mask(byte[] value, final boolean fipsEnabled) {
         if (isDefault()) {
-            return blake2bHash(value);
+            OpenSearchSecurityPlugin.isActionTraceEnabled();
+            //
+            if (fipsEnabled){
+                return sha3Hash(value);
+            }
+            else {
+                return blake2bHash(value);
+            }
         } else {
             return customHash(value);
         }
     }
 
-    public String mask(String value) {
+    public String mask(String value, final boolean fipsEnabled) {
         if (isDefault()) {
-            return blake2bHash(value);
+            if (fipsEnabled){
+                //TODO FIPS Make configurable? Validate? See https://opensearch.org/docs/latest/security/access-control/field-masking/#advanced-use-an-alternative-hash-algorithm
+                return sha3Hash(value);
+            }
+            else {
+                return blake2bHash(value);
+            }
         } else {
             return customHash(value);
         }
     }
 
-    public BytesRef mask(BytesRef value) {
+    public BytesRef mask(BytesRef value, boolean fipsEnabled) {
         if (value == null) {
             return null;
         }
 
         if (isDefault()) {
-            return blake2bHash(value);
+            if (fipsEnabled){
+                return sha3Hash(value);
+            }
+            else {
+                return blake2bHash(value);
+            }
         } else {
             return customHash(value);
         }
@@ -164,11 +190,15 @@ public class MaskedField {
     }
 
     private byte[] blake2bHash(byte[] in) {
-        final Blake2bDigest hash = new Blake2bDigest(null, 32, null, defaultSalt);
+        final Blake2b hash = new Blake2b(null, 32, defaultSalt, null);
         hash.update(in, 0, in.length);
         final byte[] out = new byte[hash.getDigestSize()];
-        hash.doFinal(out, 0);
+        hash.digest(out, 0);
         return Hex.encode(out);
+    }
+
+    private byte[] sha3Hash(byte[] in) {
+        return DigestUtils.sha3_224(in);
     }
 
     private BytesRef blake2bHash(BytesRef in) {
@@ -178,6 +208,15 @@ public class MaskedField {
 
     private String blake2bHash(String in) {
         return new String(blake2bHash(in.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+    }
+
+    private String sha3Hash(String in) {
+        return DigestUtils.sha3_224Hex(in);
+    }
+
+    private BytesRef sha3Hash(BytesRef in) {
+        final BytesRef copy = BytesRef.deepCopyOf(in);
+        return new BytesRef(sha3Hash(copy.bytes));
     }
 
     private static class RegexReplacement {

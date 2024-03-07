@@ -26,6 +26,7 @@
 
 package org.opensearch.security;
 
+import java.io.FilePermission;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.AccessController;
 import java.security.MessageDigest;
+import java.security.PermissionCollection;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.util.ArrayList;
@@ -59,8 +61,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.QueryCachingPolicy;
 import org.apache.lucene.search.Weight;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
+//import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider;
 import org.opensearch.OpenSearchException;
 import org.opensearch.OpenSearchSecurityException;
 import org.opensearch.SpecialPermission;
@@ -324,9 +328,10 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin 
             sm.checkPermission(new SpecialPermission());
         }
 
+        //TODO FIPS Support multiple providers?
         AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
-            if (Security.getProvider("BC") == null) {
-                Security.addProvider(new BouncyCastleProvider());
+            if (Security.getProvider("BCFIPS") == null) {
+                Security.addProvider(new BouncyCastleFipsProvider());
             }
             return null;
         });
@@ -343,6 +348,7 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin 
         );
 
         log.info("Clustername: {}", settings.get("cluster.name", "opensearch"));
+        log.info("FIPS mode enabled: {}", settings.getAsBoolean(ConfigConstants.SECURITY_FIPS_MODE_ENABLED_KEY, false));
 
         if (!transportSSLEnabled && !SSLConfig.isSslOnlyMode()) {
             throw new IllegalStateException(SSLConfigConstants.SECURITY_SSL_TRANSPORT_ENABLED + " must be set to 'true'");
@@ -1300,6 +1306,10 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin 
             settings.add(
                 Setting.boolSetting(ConfigConstants.OPENDISTRO_SECURITY_AUDIT_ENABLE_TRANSPORT, true, Property.NodeScope, Property.Filtered)
             );
+            settings.add(
+                 Setting.boolSetting(ConfigConstants.SECURITY_FIPS_MODE_ENABLED_KEY, false, Property.NodeScope, Property.Filtered)
+            );
+
             final List<String> disabledCategories = new ArrayList<String>(2);
             disabledCategories.add("AUTHENTICATED");
             disabledCategories.add("GRANTED_PRIVILEGES");

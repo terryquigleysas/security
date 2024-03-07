@@ -56,9 +56,13 @@ grant {
   permission java.net.SocketPermission "*", "connect,accept,resolve";
 
   // BouncyCastle permissions
-  permission java.security.SecurityPermission "putProviderProperty.BC";
-  permission java.security.SecurityPermission "insertProvider.BC";
-  permission java.security.SecurityPermission "removeProviderProperty.BC";
+  permission java.security.SecurityPermission "putProviderProperty.BCFIPS";
+  permission java.security.SecurityPermission "insertProvider.BCFIPS";
+  permission java.security.SecurityPermission "removeProviderProperty.BCFIPS";
+  permission java.security.SecurityPermission "getProperty.org.bouncycastle.disabledAlgorithms";
+  permission java.util.PropertyPermission "jdk.tls.rejectClientInitiatedRenegotiation", "write";
+  permission java.io.FilePermission "/psw4j.properties","read";
+
   permission java.util.PropertyPermission "jdk.tls.rejectClientInitiatedRenegotiation", "write";
   permission java.security.SecurityPermission "getProperty.org.bouncycastle.rsa.max_size";
   permission java.security.SecurityPermission "getProperty.org.bouncycastle.rsa.max_mr_tests";

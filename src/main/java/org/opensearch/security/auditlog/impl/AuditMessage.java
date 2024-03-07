@@ -68,6 +68,7 @@ public final class AuditMessage {
     );
 
     @VisibleForTesting
+    //TODO FIPS Review redaction for alternative e.g. PBKDF2
     public static final Pattern BCRYPT_HASH = Pattern.compile("\\$2[ayb]\\$.{56}");
     private static final String BCRYPT_HASH_REPLACEMENT_VALUE = "__HASH__";
     private static final String INTERNALUSERS_DOC_ID = CType.INTERNALUSERS.toLCString();
