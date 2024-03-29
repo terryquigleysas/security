@@ -45,7 +45,7 @@ public class NoOpAuthenticationBackend implements AuthenticationBackend {
     }
 
     @Override
-    public User authenticate(final AuthCredentials credentials) {
+    public User authenticate(final AuthCredentials credentials, final boolean fipsEnabled) {
         User user = new User(credentials.getUsername(), credentials.getBackendRoles(), credentials);
         user.addSecurityRoles(credentials.getSecurityRoles());
         return user;

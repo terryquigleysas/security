@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.core.common.Strings;
 import org.opensearch.security.DefaultObjectMapper;
+import org.opensearch.security.dlic.rest.support.Utils;
 import org.opensearch.security.dlic.rest.validation.PasswordValidator;
 import org.opensearch.security.dlic.rest.validation.RequestContentValidator;
 import org.opensearch.security.support.ConfigConstants;
@@ -163,7 +164,7 @@ public class SecuritySettingsConfigurer {
             // Print an update to the logs
             System.out.println("Admin password set successfully.");
 
-            writePasswordToInternalUsersFile(ADMIN_PASSWORD, INTERNAL_USERS_FILE_PATH);
+            writePasswordToInternalUsersFile(ADMIN_PASSWORD, INTERNAL_USERS_FILE_PATH, installer.fips_enabled);
 
         } catch (IOException e) {
             System.out.println("Exception updating the admin password : " + e.getMessage());
@@ -177,8 +178,8 @@ public class SecuritySettingsConfigurer {
      * @param internalUsersFile the file path string to internal_users.yml file
      * @throws IOException while reading, writing to files
      */
-    void writePasswordToInternalUsersFile(String adminPassword, String internalUsersFile) throws IOException {
-        String hashedAdminPassword = Hasher.hash(adminPassword.toCharArray());
+    void writePasswordToInternalUsersFile(String adminPassword, String internalUsersFile, final boolean fipsEnabled) throws IOException {
+        String hashedAdminPassword = Utils.hash(adminPassword.toCharArray(), fipsEnabled);
 
         if (hashedAdminPassword.isEmpty()) {
             System.out.println("Hash the admin password failure, see console for details");

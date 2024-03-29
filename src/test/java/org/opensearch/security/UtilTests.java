@@ -29,10 +29,8 @@ package org.opensearch.security;
 import java.util.Map;
 
 import com.password4j.BcryptFunction;
-import com.password4j.Hash;
 import com.password4j.types.Bcrypt;
 import org.junit.Test;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 import org.opensearch.common.settings.Settings;
 import org.opensearch.security.support.ConfigConstants;

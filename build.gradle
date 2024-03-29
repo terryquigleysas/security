@@ -16,8 +16,12 @@ import groovy.json.JsonBuilder
 
 buildscript {
     ext {
-        opensearch_version = System.getProperty("opensearch.version", "2.12.1-SNAPSHOT")
-        isSnapshot = "true" == System.getProperty("build.snapshot", "true")
+//        opensearch_version = System.getProperty("opensearch.version", "2.12.1-SNAPSHOT")
+        opensearch_version = System.getProperty("opensearch.version", "2.12.0")
+
+//        isSnapshot = "true" == System.getProperty("build.snapshot", "true")
+        isSnapshot = "true" == System.getProperty("build.snapshot", "false")
+
         buildVersionQualifier = System.getProperty("build.version_qualifier", "")
 
         // 2.0.0-rc1-SNAPSHOT -> 2.0.0.0-rc1-SNAPSHOT
@@ -575,7 +579,6 @@ dependencies {
     implementation "com.google.guava:guava:${guava_version}"
     implementation 'org.greenrobot:eventbus-java:3.3.1'
     implementation 'commons-cli:commons-cli:1.6.0'
-    implementation 'commons-cli:commons-cli:1.5.0'
     implementation 'com.rfksystems:blake2b:2.0.0'
     compileOnly "org.bouncycastle:bc-fips:1.0.2.4"
     compileOnly "org.bouncycastle:bctls-fips:1.0.18"

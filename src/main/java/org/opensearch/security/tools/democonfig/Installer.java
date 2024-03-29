@@ -45,6 +45,7 @@ public class Installer {
     boolean assumeyes = false;
     boolean initsecurity = false;
     boolean cluster_mode = false;
+    boolean fips_enabled = false;
     int skip_updates = -1;
     String SCRIPT_DIR;
     String BASE_DIR;
@@ -143,6 +144,13 @@ public class Installer {
             "test-execution-environment",
             false,
             "Set the execution environment to `test` to skip password validation. Should be used only for testing. (default is set to `demo`)"
+        );
+        //workaround for now:
+        options.addOption(
+                "f",
+                "fips-enabled",
+                false,
+                "fips enabled"
         );
     }
 
