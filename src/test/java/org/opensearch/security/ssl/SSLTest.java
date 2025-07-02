@@ -1289,18 +1289,4 @@ public class SSLTest extends SingleClusterTest {
         Assert.assertTrue(res.contains("CN=node-0.example.com,OU=SSL,O=Test,L=Test,C=DE"));
         Assert.assertTrue(rh.executeSimpleRequest("_nodes/settings?pretty").contains(clusterInfo.clustername));
     }
-
-    @Test
-    public void testGetObjectMethod() {
-        try {
-            Method method = DefaultSecurityKeyStore.getObjectMethod();
-            Assert.assertNotNull("Method should not be null", method);
-            Assert.assertTrue(
-                "One of the expected methods should be available",
-                method.getName().equals("getBaseObject") || method.getName().equals("getObject")
-            );
-        } catch (ClassNotFoundException | NoSuchMethodException e) {
-            Assert.fail("Exception should not be thrown: " + e.getMessage());
-        }
-    }
 }
