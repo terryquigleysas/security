@@ -11,7 +11,6 @@
 
 package org.opensearch.security.ssl.config;
 
-import java.lang.reflect.Method;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
