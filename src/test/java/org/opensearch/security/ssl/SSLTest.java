@@ -17,7 +17,6 @@
 
 package org.opensearch.security.ssl;
 
-import java.lang.reflect.Method;
 import java.net.SocketException;
 import java.nio.file.Paths;
 import java.security.Security;
